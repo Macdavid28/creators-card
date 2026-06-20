@@ -246,10 +246,20 @@ function Server(serverConfig = {}) {
         responseComponents.body.message = error.isApplicationError
           ? error.message
           : 'Some error occured.';
+        if (error.errorCode) {
+          responseComponents.body.code = error.errorCode;
+        }
         responseComponents.body.errors = error.details || undefined;
         responseComponents.body.data = error.context;
 
-        expressResponse.status(responseComponents.statusCode).json(responseComponents.body); // Todo: Add a callback config that can be used to handle this in a custom way.
+        if (
+          error.isApplicationError &&
+          ['SL02', 'AC01', 'AC05', 'NF01', 'NF02', 'AC03', 'AC04'].includes(error.errorCode)
+        ) {
+          expressResponse.status(responseComponents.statusCode).json({ code: error.errorCode });
+        } else {
+          expressResponse.status(responseComponents.statusCode).json(responseComponents.body); // Todo: Add a callback config that can be used to handle this in a custom way.
+        }
       } finally {
         if (typeof handlerConfiguration.onResponseEnd === 'function') {
           try {
